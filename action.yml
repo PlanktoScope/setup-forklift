@@ -3,8 +3,7 @@ description: Sets up the Forklift CLI in your GitHub Actions workflow.
 inputs:
   version:
     description: Version of the Forklift CLI to install. Semver Ranges (https://www.npmjs.com/package/semver#ranges) are supported.
-    required: false
-    default: latest
+    required: true
   github-token:
     description: 'The GitHub access token (e.g. secrets.GITHUB_TOKEN) used to get the list of Forklift CLI versions. This defaults to {{ github.token }}.'
     default: '${{ github.token }}'

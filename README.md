@@ -6,7 +6,7 @@ Forklift is an open source tool for distributing updating apps on embedded Linux
 
 ## Basic Usage
 
-Here we see a simple template that checks out the pallet, installs the latest Forklift CLI, and then verifies the pallet.
+Here we see a simple template that checks out the pallet, installs the specified version of the Forklift CLI, and then verifies the pallet.
 
 ```yml
 name: Run Forklift checks
@@ -21,7 +21,7 @@ jobs:
     - name: Setup Forklift
       uses: PlanktoScope/setup-forklift@v0
       with:
-        version: latest
+        version: v0.5.0
 
     - name: Run Forklift checks
       run: |
@@ -69,30 +69,12 @@ steps:
       version: <0.4
 ```
 
-You may also use the `latest` or `edge` version.
-
-```yml
-steps:
-  - name: Setup Forklift
-    uses: PlanktoScope/setup-forklift@v0
-    with:
-      version: latest
-```
-
-```yml
-steps:
-  - name: Setup Forklift
-    uses: PlanktoScope/setup-forklift@v0
-    with:
-      version: edge
-```
-
 You can also choose to run your checks against multiple versions of Forklift.
 
 ```yml
 strategy:
   matrix:
-    forklift-version: [latest, 0.5.x, 0.4.x]
+    forklift-version: [0.5.x, 0.4.x]
 steps:
   - name: Setup Forklift
     uses: PlanktoScope/setup-forklift@v0
@@ -104,7 +86,7 @@ steps:
 
 The action supports the following inputs:
 
-- `version`: Optional, defaults to `latest`.  `latest`, `edge`, and [SemVer ranges](https://www.npmjs.com/package/semver#ranges) are supported, so instead of a [full version](https://github.com/PlanktoScope/forklift/releases) string, you can use `0.4`. This enables you to automatically get the latest backward compatible changes in the v0.4 release.
+- `version`: Required. [SemVer ranges](https://www.npmjs.com/package/semver#ranges) are supported, so instead of a [full version](https://github.com/PlanktoScope/forklift/releases) string, you can use `0.4`. This enables you to automatically get the latest backward compatible changes in the v0.4 release.
 
 ## Outputs
 

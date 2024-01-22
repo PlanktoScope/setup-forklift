@@ -17004,12 +17004,7 @@ function mapOS(os) {
     return mappings[os] || os;
 }
 function getDownloadObject(version) {
-    let vsn = `v${version}`;
-    let github = true;
-    if (version === 'latest' || version === 'edge') {
-        vsn = version;
-        github = false;
-    }
+    const vsn = `v${version}`;
     const platform = os.platform();
     const arch = os.arch();
     // forklift_0.5.0_linux_amd64

@@ -30,12 +30,7 @@ function getDownloadObject(version: string): {
   archiveName: string;
   binaryName: string;
 } {
-  let vsn = `v${version}`;
-  let github = true;
-  if (version === 'latest' || version === 'edge') {
-    vsn = version;
-    github = false;
-  }
+  const vsn = `v${version}`;
 
   const platform = os.platform();
   const arch = os.arch();

@@ -25,16 +25,9 @@ function mapOS(os: string): string {
   return mappings[os] || os;
 }
 
-// append static to the filename if requesting the static binary
-// opa_linux_arm64_static
-function maybeStatic(filename: string): string {
-  const staticBinary = core.getInput('static')
-
-  return staticBinary === 'true' ? `${filename}_static` : filename;
-}
-
 function getDownloadObject(version: string): {
   url: string;
+  archiveName: string;
   binaryName: string;
 } {
   let vsn = `v${version}`;
@@ -45,40 +38,50 @@ function getDownloadObject(version: string): {
   }
 
   const platform = os.platform();
+  const arch = os.arch();
 
-  // opa_darwin_amd64
-  const filename = `opa_${mapOS(platform)}_${mapArch(os.arch())}`;
-  const binaryName = platform === 'win32' ? `${filename}.exe` : maybeStatic(filename);
+  // forklift_0.5.0_linux_amd64
+  const filename = `forklift_${version}_${mapOS(platform)}_${mapArch(arch)}`;
+  const archiveName = platform === 'win32' ? `${filename}.zip` : `${filename}.tar.gz`;
+  const binaryName = platform === 'win32' ? `forklift.zip` : `forklift`;
 
-  let url: string;
-  if (github) {
-    url = `https://github.com/open-policy-agent/opa/releases/download/${vsn}/${binaryName}`;
-  } else {
-    url = `https://www.openpolicyagent.org/downloads/${vsn}/${binaryName}`;
-  }
+  const url = `https://github.com/PlanktoScope/forklift/releases/download/${vsn}/${archiveName}`;
 
   return {
     url,
+    archiveName,
     binaryName,
   };
 }
 
-// Rename opa-<platform>-<arch> to opa
-async function renameBinary(
+// Extract binary from release archive
+async function extractBinary(
   pathToCLI: string,
-  binaryName: string
+  archiveName: string,
+  binaryName: string,
 ): Promise<void> {
-  const source = path.join(pathToCLI, binaryName);
-  const target = path.join(
-    pathToCLI,
-    binaryName.endsWith('.exe') ? 'opa.exe' : 'opa'
-  );
+  const archivePath = path.join(pathToCLI, archiveName);
+  const extractedPath = path.join(pathToCLI, 'forklift-release');
+  const binaryFrom = path.join(extractedPath, binaryName);
+  const binaryTo = path.join(pathToCLI, binaryName);
 
-  core.debug(`Moving ${source} to ${target}.`);
+  core.debug(`Extracting ${archivePath} to ${extractedPath}...`);
   try {
-    await io.mv(source, target);
+    if (archiveName.endsWith('.zip')) {
+      await tc.extractZip(archivePath, extractedPath);
+    } else {
+      await tc.extractTar(archivePath, extractedPath);
+    }
   } catch (e) {
-    core.error(`Unable to move ${source} to ${target}.`);
+    core.error(`Unable to extract ${archivePath} to ${extractedPath}.`);
+    throw e;
+  }
+
+  core.debug(`Moving ${binaryFrom} to ${binaryTo}...`);
+  try {
+    await io.mv(binaryFrom, binaryTo);
+  } catch (e) {
+    core.error(`Unable to move ${binaryFrom} to ${binaryTo}.`);
     throw e;
   }
 }
@@ -112,7 +115,7 @@ async function getAllVersions(): Promise<string[]> {
   const allVersions: string[] = [];
   for await (const response of octokit.paginate.iterator(
     octokit.rest.repos.listReleases,
-    { owner: 'open-policy-agent', repo: 'opa' }
+    { owner: 'PlanktoScope', repo: 'forklift' }
   )) {
     for (const release of response.data) {
       if (release.name) {
@@ -134,19 +137,19 @@ async function setup(): Promise<void> {
 
     await tc.downloadTool(
       download.url,
-      path.join(pathToCLI, download.binaryName)
+      path.join(pathToCLI, download.archiveName)
     );
+
+    // Extract the binary from the archive
+    await extractBinary(pathToCLI, download.archiveName, download.binaryName);
 
     // Make the downloaded file executable
     fs.chmodSync(path.join(pathToCLI, download.binaryName), '755');
 
-    // Rename the platform/architecture specific binary to 'opa' or 'opa.exe'
-    await renameBinary(pathToCLI, download.binaryName);
-
     // Expose the tool by adding it to the PATH
     core.addPath(pathToCLI);
 
-    core.info(`Setup Open Policy Agent CLI version ${version}`);
+    core.info(`Setup Forklift CLI version ${version}`);
   } catch (e) {
     core.setFailed(e as string | Error);
   }

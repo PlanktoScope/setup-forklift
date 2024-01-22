@@ -1,5 +1,5 @@
 {
-  "name": "setup-opa",
+  "name": "setup-forklift",
   "version": "0.0.1",
   "description": "",
   "main": "dist/index.js",
@@ -11,12 +11,12 @@
     "format": "prettier --write 'src/**/*.{js,ts}'"
   },
   "keywords": [],
-  "homepage": "https://www.openpolicyagent.org/",
-  "author": "Infracost",
+  "homepage": "https://github.com/PlanktoScope/forklift",
+  "author": "Ethan Li",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/open-policy-agent/setup-opa.git"
+    "url": "git+https://github.com/PlanktoScope/setup-forklift.git"
   },
   "dependencies": {
     "@actions/core": "^1.9.1",

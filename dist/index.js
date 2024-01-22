@@ -17003,12 +17003,6 @@ function mapOS(os) {
     };
     return mappings[os] || os;
 }
-// append static to the filename if requesting the static binary
-// opa_linux_arm64_static
-function maybeStatic(filename) {
-    const staticBinary = core.getInput('static');
-    return staticBinary === 'true' ? `${filename}_static` : filename;
-}
 function getDownloadObject(version) {
     let vsn = `v${version}`;
     let github = true;
@@ -17017,32 +17011,44 @@ function getDownloadObject(version) {
         github = false;
     }
     const platform = os.platform();
-    // opa_darwin_amd64
-    const filename = `opa_${mapOS(platform)}_${mapArch(os.arch())}`;
-    const binaryName = platform === 'win32' ? `${filename}.exe` : maybeStatic(filename);
-    let url;
-    if (github) {
-        url = `https://github.com/open-policy-agent/opa/releases/download/${vsn}/${binaryName}`;
-    }
-    else {
-        url = `https://www.openpolicyagent.org/downloads/${vsn}/${binaryName}`;
-    }
+    const arch = os.arch();
+    // forklift_0.5.0_linux_amd64
+    const filename = `forklift_${version}_${mapOS(platform)}_${mapArch(arch)}`;
+    const archiveName = platform === 'win32' ? `${filename}.zip` : `${filename}.tar.gz`;
+    const binaryName = platform === 'win32' ? `forklift.zip` : `forklift`;
+    const url = `https://github.com/PlanktoScope/forklift/releases/download/${vsn}/${archiveName}`;
     return {
         url,
+        archiveName,
         binaryName,
     };
 }
-// Rename opa-<platform>-<arch> to opa
-function renameBinary(pathToCLI, binaryName) {
+// Extract binary from release archive
+function extractBinary(pathToCLI, archiveName, binaryName) {
     return __awaiter(this, void 0, void 0, function* () {
-        const source = path.join(pathToCLI, binaryName);
-        const target = path.join(pathToCLI, binaryName.endsWith('.exe') ? 'opa.exe' : 'opa');
-        core.debug(`Moving ${source} to ${target}.`);
+        const archivePath = path.join(pathToCLI, archiveName);
+        const extractedPath = path.join(pathToCLI, 'forklift-release');
+        const binaryFrom = path.join(extractedPath, binaryName);
+        const binaryTo = path.join(pathToCLI, binaryName);
+        core.debug(`Extracting ${archivePath} to ${extractedPath}...`);
         try {
-            yield io.mv(source, target);
+            if (archiveName.endsWith('.zip')) {
+                yield tc.extractZip(archivePath, extractedPath);
+            }
+            else {
+                yield tc.extractTar(archivePath, extractedPath);
+            }
         }
         catch (e) {
-            core.error(`Unable to move ${source} to ${target}.`);
+            core.error(`Unable to extract ${archivePath} to ${extractedPath}.`);
+            throw e;
+        }
+        core.debug(`Moving ${binaryFrom} to ${binaryTo}...`);
+        try {
+            yield io.mv(binaryFrom, binaryTo);
+        }
+        catch (e) {
+            core.error(`Unable to move ${binaryFrom} to ${binaryTo}.`);
             throw e;
         }
     });
@@ -17076,7 +17082,7 @@ function getAllVersions() {
         const octokit = github.getOctokit(githubToken);
         const allVersions = [];
         try {
-            for (var _b = __asyncValues(octokit.paginate.iterator(octokit.rest.repos.listReleases, { owner: 'open-policy-agent', repo: 'opa' })), _c; _c = yield _b.next(), !_c.done;) {
+            for (var _b = __asyncValues(octokit.paginate.iterator(octokit.rest.repos.listReleases, { owner: 'PlanktoScope', repo: 'forklift' })), _c; _c = yield _b.next(), !_c.done;) {
                 const response = _c.value;
                 for (const release of response.data) {
                     if (release.name) {
@@ -17103,14 +17109,14 @@ function setup() {
             // Download the specific version of the tool, e.g. as a tarball/zipball
             const download = getDownloadObject(version);
             const pathToCLI = fs.mkdtempSync(path.join(os.tmpdir(), 'tmp'));
-            yield tc.downloadTool(download.url, path.join(pathToCLI, download.binaryName));
+            yield tc.downloadTool(download.url, path.join(pathToCLI, download.archiveName));
+            // Extract the binary from the archive
+            yield extractBinary(pathToCLI, download.archiveName, download.binaryName);
             // Make the downloaded file executable
             fs.chmodSync(path.join(pathToCLI, download.binaryName), '755');
-            // Rename the platform/architecture specific binary to 'opa' or 'opa.exe'
-            yield renameBinary(pathToCLI, download.binaryName);
             // Expose the tool by adding it to the PATH
             core.addPath(pathToCLI);
-            core.info(`Setup Open Policy Agent CLI version ${version}`);
+            core.info(`Setup Forklift CLI version ${version}`);
         }
         catch (e) {
             core.setFailed(e);

@@ -19,7 +19,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Setup Forklift
-      uses: PlanktoScope/setup-forklift@v0
+      uses: PlanktoScope/setup-forklift@v1
       with:
         version: v0.5.0
 
@@ -38,7 +38,7 @@ When Forklift is installed on the GitHub runner, you can select a the specific v
 ```yml
 steps:
   - name: Setup Forklift
-    uses: PlanktoScope/setup-forklift@v0
+    uses: PlanktoScope/setup-forklift@v1
     with:
       version: 0.5.0
 ```
@@ -48,7 +48,7 @@ Or, Forklift can be locked to a [SemVer range](https://www.npmjs.com/package/sem
 ```yml
 steps:
   - name: Setup Forklift
-    uses: PlanktoScope/setup-forklift@v0
+    uses: PlanktoScope/setup-forklift@v1
     with:
       version: 0.4.x
 ```
@@ -56,7 +56,7 @@ steps:
 ```yml
 steps:
   - name: Setup Forklift
-    uses: PlanktoScope/setup-forklift@v0
+    uses: PlanktoScope/setup-forklift@v1
     with:
       version: 0.4
 ```
@@ -64,7 +64,7 @@ steps:
 ```yml
 steps:
   - name: Setup Forklift
-    uses: PlanktoScope/setup-forklift@v0
+    uses: PlanktoScope/setup-forklift@v1
     with:
       version: <0.4
 ```
@@ -77,7 +77,7 @@ strategy:
     forklift-version: [0.5.x, 0.4.x]
 steps:
   - name: Setup Forklift
-    uses: PlanktoScope/setup-forklift@v0
+    uses: PlanktoScope/setup-forklift@v1
     with:
       version: ${{ matrix.forklift-version }}
 ```
@@ -86,7 +86,7 @@ steps:
 
 The action supports the following inputs:
 
-- `version`: Required. [SemVer ranges](https://www.npmjs.com/package/semver#ranges) are supported, so instead of a [full version](https://github.com/PlanktoScope/forklift/releases) string, you can use `0.4`. This enables you to automatically get the latest backward compatible changes in the v0.4 release.
+- `version`: Required. [SemVer ranges](https://www.npmjs.com/package/semver#ranges) are supported, so instead of a [full version](https://github.com/PlanktoScope/forklift/releases) string, you can use `0.5`. This enables you to automatically get the latest backward compatible changes in the v0.5 release.
 
 ## Outputs
 
